@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Kelime Defteri | Akıllı Ezber Masası</title>
+
+  <!-- iOS Safari PWA ve Tam Ekran Entegrasyonu -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kelime Defteri">
+  <meta name="theme-color" content="#381d09">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- SVG PWA İkonu -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%234a260f'/%3E%3Crect x='90' y='60' width='332' height='392' rx='16' fill='%23faf7ee'/%3E%3Cpath d='M140 120h232M140 180h232M140 240h232M140 300h232M140 360h232' stroke='%23b4cde6' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M180 60v392' stroke='%23ef4444' stroke-width='6' opacity='0.6'/%3E%3Ccircle cx='90' cy='120' r='14' fill='%232e1507'/%3E%3C/svg%3E">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter, Patrick Hand, Caveat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            hand: ['Patrick Hand', 'Caveat', 'cursive'],
+            script: ['Caveat', 'cursive']
+          },
+          colors: {
+            paper: '#faf7ee',
+            marginRed: 'rgba(239, 68, 68, 0.55)',
+            ruleBlue: 'rgba(180, 205, 230, 0.75)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --row-h: 38px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    @media (min-width: 640px) {
+      :root {
+        --row-h: 40px;
+      }
+    }
+
+    /* Ahşap Zemin */
+    body {
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-top: max(12px, var(--safe-top));
+      padding-bottom: max(24px, var(--safe-bottom));
+      padding-left: max(8px, var(--safe-left));
+      padding-right: max(8px, var(--safe-right));
+      background-color: #381d09;
+      background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(150, 85, 36, 0.42) 0%, rgba(20, 9, 3, 0.94) 95%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 2px, transparent 2px, transparent 14px),
+        linear-gradient(to right, #381d09, #562c11, #6e3a17, #4f270d, #2e1507);
+      background-attachment: fixed;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: pan-y;
+      transition: background 0.5s ease-in-out;
+    }
+
+    /* Sıcak Masa Lambası Gece Modu */
+    body.lamp-active {
+      background-color: #0b0502;
+      background-image: 
+        radial-gradient(circle at 50% 34%, rgba(255, 230, 160, 0.52) 0%, rgba(255, 185, 70, 0.22) 36%, rgba(18, 8, 3, 0.9) 70%, rgba(4, 2, 1, 0.98) 100%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 2px, transparent 2px, transparent 14px),
+        linear-gradient(to right, #150903, #220f06, #2c1408, #1c0b04, #0e0401);
+    }
+
+    body.lamp-active #notebookContainer {
+      box-shadow: 
+        0 0 75px rgba(255, 210, 110, 0.25),
+        0 25px 60px -10px rgba(0, 0, 0, 0.95),
+        0 5px 20px rgba(0, 0, 0, 0.85);
+      filter: drop-shadow(0 0 30px rgba(255, 200, 90, 0.16));
+    }
+
+    /* Çizgili Defter Sayfası Dokusu */
+    .notebook-paper {
+      background-color: #faf7ee;
+      background-image: 
+        linear-gradient(90deg, transparent 42px, var(--marginRed) 42px, var(--marginRed) 44px, transparent 44px),
+        repeating-linear-gradient(transparent, transparent calc(var(--row-h) - 1px), var(--ruleBlue) calc(var(--row-h) - 1px), var(--ruleBlue) var(--row-h));
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.65),
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        inset 0 0 40px rgba(180, 150, 100, 0.15);
+    }
+
+    @media (max-width: 639px) {
+      .notebook-paper {
+        background-image: 
+          linear-gradient(90deg, transparent 34px, var(--marginRed) 34px, var(--marginRed) 36px, transparent 36px),
+          repeating-linear-gradient(transparent, transparent calc(var(--row-h) - 1px), var(--ruleBlue) calc(var(--row-h) - 1px), var(--ruleBlue) var(--row-h));
+      }
+    }
+
+    /* Spiral Cilt */
+    .spiral-edge {
+      background: linear-gradient(to right, #cfc9be 0%, #ebe7dc 50%, #fbf9f4 100%);
+      box-shadow: inset -4px 0 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .spiral-hole {
+      width: 13px;
+      height: 13px;
+      background: radial-gradient(circle at 40% 40%, #150f09 0%, #2e1e12 85%, #7e5535 100%);
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.4);
+    }
+
+    .spiral-ring {
+      position: absolute;
+      left: -9px;
+      width: 25px;
+      height: 13px;
+      border: 3px solid #8e959e;
+      border-bottom-color: #535860;
+      border-top-color: #e2e8f0;
+      border-radius: 12px;
+      transform: rotate(-18deg);
+      filter: drop-shadow(2px 3px 2px rgba(0,0,0,0.45));
+      pointer-events: none;
+    }
+
+    /* A4 Örtücü Kağıt (Blinder Sheet) */
+    .a4-cover-sheet {
+      background: linear-gradient(135deg, #ffffff 0%, #fcfbf9 60%, #f4f0e6 100%);
+      box-shadow: 
+        0 14px 28px rgba(0,0,0,0.32),
+        0 6px 12px rgba(0,0,0,0.2),
+        inset 0 0 15px rgba(0,0,0,0.03);
+      transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.05);
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    .paper-handle {
+      background: linear-gradient(to bottom, #f1ebd8, #e5dcbe);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    /* Genişleyen Dock Animasyonu */
+    .dock-expanded {
+      max-width: 92vw !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    .dock-btn {
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(85, 40, 15, 0.75);
+      border: 1px solid rgba(180, 115, 60, 0.4);
+      color: #fde68a;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+
+    .dock-btn:hover {
+      background: rgba(120, 60, 20, 0.9);
+      border-color: rgba(245, 180, 80, 0.8);
+      color: #ffffff;
+    }
+
+    .dock-btn:active {
+      transform: scale(0.94);
+    }
+
+    .ripple-active {
+      animation: rippleEffect 0.4s ease-out;
+    }
+
+    @keyframes rippleEffect {
+      0% { opacity: 0.45; transform: scale(0.9); }
+      100% { opacity: 0; transform: scale(1.6); }
+    }
+  </style>
+</head>
+
+<body class="text-slate-800 flex flex-col items-center">
+
+  <!-- SAĞ ÜST YUVARLAK / YANA GENİŞLEYEN AKILLI DOCK -->
+  <div id="smartDockContainer" class="fixed top-3 right-3 sm:right-5 z-40 flex items-center justify-end select-none">
+    
+    <!-- Yana Doğru Açılan Araç Çubuğu (Genişleyen Kısım) -->
+    <div id="dockExpandingBelt" 
+         class="flex items-center gap-1 sm:gap-1.5 overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 pointer-events-none pr-1.5 bg-amber-950/90 backdrop-blur-md p-1.5 rounded-2xl border border-amber-800/80 shadow-2xl mr-1">
+      
+      <!-- Sayfa Değiştirici -->
+      <div class="flex items-center bg-amber-900/60 border border-amber-700/60 rounded-xl px-1.5 py-1 text-amber-200">
+        <button id="dockBtnPrevPage" title="Önceki Sayfa" class="px-1 text-xs hover:text-white active:scale-90 font-bold">◀</button>
+        <span id="dockPageIndicator" class="font-mono text-xs px-1 font-bold text-amber-100">1/2</span>
+        <button id="dockBtnNextPage" title="Sonraki Sayfa" class="px-1 text-xs hover:text-white active:scale-90 font-bold">▶</button>
+      </div>
+
+      <!-- Karıştır (Shuffle) -->
+      <button id="dockBtnShuffle" title="Sayfayı Rastgele Karıştır" class="dock-btn">
+        <span>🔀</span>
+      </button>
+
+      <!-- A-Z Sırala -->
+      <button id="dockBtnSort" title="Kelimeleri A-Z Sırala" class="dock-btn">
+        <span>🔤</span>
+      </button>
+
+      <!-- Ses (TTS) Aç / Kapat -->
+      <button id="dockBtnTTS" title="Doğal Telaffuz Sesini Aç/Kapat" class="dock-btn">
+        <span id="dockTtsIcon">🔊</span>
+      </button>
+
+      <!-- Masa Lambası -->
+      <button id="dockBtnLamp" title="Masa Lambası (Gece Modu)" class="dock-btn">
+        <span id="dockLampIcon">💡</span>
+      </button>
+
+      <!-- Günlük Hatırlatıcı -->
+      <button id="dockBtnReminder" title="Ezber Hatırlatıcısı & iPhone Takvimi" class="dock-btn">
+        <span>🔔</span>
+      </button>
+
+      <!-- Rehber (?) -->
+      <button id="dockBtnHelp" title="Nasıl Kullanılır?" class="dock-btn font-bold text-amber-300">
+        ?
+      </button>
+
+    </div>
+
+    <!-- ANA YUVARLAK TETİKLEYİCİ BUTON (Kapalıyken Menü İkonu, Açılınca ⚙️ Ayarlar Butonuna Dönüşür) -->
+    <button id="dockTriggerBtn" 
+            title="Menüyü Aç" 
+            class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-amber-700 via-amber-850 to-amber-950 border-2 border-amber-500/70 text-amber-200 shadow-2xl flex items-center justify-center text-lg active:scale-95 transition-all duration-300 hover:border-amber-300 hover:text-white">
+      <span id="dockTriggerIcon" class="transition-transform duration-300">✦</span>
+    </button>
+
+  </div>
+
+  <!-- DEFTAR ALANI -->
+  <main class="relative w-full max-w-2xl px-1 pt-2 pb-16 flex flex-col items-center">
+    
+    <!-- Defter Çerçevesi -->
+    <div id="notebookContainer" class="relative w-full bg-[#efe9d9] rounded-2xl shadow-2xl overflow-hidden flex border border-[#b8ab94] transition-all duration-300 ease-out">
+      
+      <!-- Sol Spiral Cilt Bölümü -->
+      <div class="spiral-edge w-7 sm:w-10 flex-shrink-0 flex flex-col justify-around items-center py-5 relative border-r border-[#d4cbba]">
+        <div id="spiralHolesContainer" class="w-full h-full flex flex-col justify-between items-center py-2 pointer-events-none">
+          <!-- Spiral delikleri JS tarafından doldurulur -->
+        </div>
+      </div>
+
+      <!-- Defter Sayfası İçeriği (Notebook Page) -->
+      <div id="notebookPage" class="notebook-paper relative flex-1 flex flex-col pl-1 sm:pl-3 pr-2 sm:pr-4 py-3 select-none">
+        
+        <!-- Sayfa Üst Bilgisi (Tarih & Sayfa No + Doğrudan Başlıktan Sayfa Değiştirici) -->
+        <div class="flex items-center justify-between pb-2 mb-1 border-b border-rose-300/60 px-2 sm:px-4 text-xs text-slate-500 font-medium">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-800/80 font-serif italic text-xs">Tarih:</span>
+            <span id="notebookDateDisplay" class="font-hand text-base text-slate-800"></span>
+          </div>
+
+          <!-- Sayfa Başlığında Tıklanabilir Sayfa Çevirme Butonları -->
+          <div class="flex items-center gap-1.5 bg-amber-200/60 px-2 py-0.5 rounded border border-amber-300/70">
+            <button id="btnPaperPrevPage" title="Önceki Sayfa" class="text-amber-900 font-bold px-1 hover:text-black active:scale-75 transition">‹</button>
+            <span id="notebookPageDisplay" class="font-bold text-amber-950 font-mono tracking-wider">
+              1 / 2
+            </span>
+            <button id="btnPaperNextPage" title="Sonraki Sayfa" class="text-amber-900 font-bold px-1 hover:text-black active:scale-75 transition">›</button>
+          </div>
+        </div>
+
+        <!-- Sütun Başlıkları -->
+        <div class="grid grid-cols-12 text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 px-1 border-b border-blue-200/50 pb-1">
+          <div class="col-span-1 text-center text-slate-400">#</div>
+          <div class="col-span-5 pl-2 text-indigo-950 flex items-center gap-1 truncate">
+            <span>İngilizce</span>
+            <span class="text-[9px] lowercase text-slate-400 hidden sm:inline">(kelime)</span>
+          </div>
+          <div class="col-span-6 pl-2 text-emerald-950 flex items-center justify-between pr-2">
+            <div class="flex items-center gap-1 truncate">
+              <span>Türkçe</span>
+              <span class="text-[9px] lowercase text-slate-400 hidden sm:inline">(anlamı)</span>
+            </div>
+            <span id="blinderStatusBadge" class="text-[9px] uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-sans border border-amber-300">
+              Örtülü
+            </span>
+          </div>
+        </div>
+
+        <!-- 20 Satırlık Liste Alanı ve A4 ÖRTÜCÜ KARTIN YUVASI (Wrapper) -->
+        <div id="vocabRowsWrapper" class="relative flex-1 flex flex-col justify-start overflow-hidden">
+          
+          <!-- Satırlar Container -->
+          <div id="vocabRowsContainer" class="w-full flex flex-col justify-start">
+            <!-- 20 Satır JS tarafından tertemiz oluşturulur -->
+          </div>
+
+          <!-- Kayar A4 Kağıdı (Blinder Cover Sheet) -->
+          <div id="blinderSheet" 
+               class="a4-cover-sheet absolute rounded-sm border border-stone-200/80 flex flex-col justify-between"
+               style="top: 0px; height: 100%; right: 0px; width: 50%;">
+            
+            <!-- Kağıt Üst Kıvrımı ve Tutamaç Çıkıntısı -->
+            <div class="w-full flex items-center justify-between px-2.5 py-1.5 bg-stone-100/90 border-b border-stone-200">
+              <div class="flex items-center gap-1.5 opacity-60">
+                <span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span>
+                <span class="text-[10px] font-sans font-medium text-slate-500 tracking-wide uppercase">A4 Örtücü Kart</span>
+              </div>
+              <div class="paper-handle px-2.5 py-0.5 rounded text-[10px] font-mono font-bold text-amber-900/80 tracking-tighter shadow-sm flex items-center gap-1">
+                <span>↕</span>
+                <span id="blinderStepText">0 / 20</span>
+              </div>
+            </div>
+
+            <!-- Kağıt Gövdesi (Filigran & İpuçları) -->
+            <div class="flex-1 flex flex-col items-center justify-center p-3 text-center opacity-30 select-none">
+              <div class="text-3xl mb-1">📝</div>
+              <p class="text-[11px] font-hand text-slate-700 tracking-wider">Cevabı tahmin et & sağa dokun</p>
+            </div>
+
+            <!-- Alt Kenar Yumuşak Gölgesi -->
+            <div class="w-full h-3 bg-gradient-to-t from-stone-300/40 to-transparent"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Dokunmatik Yüzeyler (Touch Hotzones) -->
+      <div id="leftTapZone" 
+           title="Dokun: Yukarı Kapat | Basılı Tut: Önceki Sayfa" 
+           class="absolute inset-y-0 left-0 w-1/2 z-10 cursor-pointer active:bg-blue-500/5 transition-colors">
+      </div>
+
+      <div id="rightTapZone" 
+           title="Dokun: Aşağı Aç & Oku | Basılı Tut: Sonraki Sayfa" 
+           class="absolute inset-y-0 right-0 w-1/2 z-10 cursor-pointer active:bg-emerald-500/5 transition-colors">
+      </div>
+
+      <!-- Dokunma Dalgalanması Efekti Container -->
+      <div id="touchRippleContainer" class="absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL: Ayarlar, Anki/Quizlet İçe Aktarma & Defter Yönetimi -->
+  <div id="modalMenu" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-amber-950 border border-amber-700/80 text-amber-100 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl relative overflow-hidden">
+      
+      <!-- Modal Sekme Başlıkları -->
+      <div class="flex border-b border-amber-800/80 bg-black/25 px-4 pt-3 items-center justify-between">
+        <div class="flex gap-2">
+          <button id="tabBtnImport" class="px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-200 transition">
+            📥 Anki & Quizlet
+          </button>
+          <button id="tabBtnAddOne" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-amber-400/70 hover:text-amber-200 transition">
+            ➕ Tek Kelime
+          </button>
+          <button id="tabBtnSettings" class="px-3 py-2 text-xs font-bold border-b-2 border-transparent text-amber-400/70 hover:text-amber-200 transition">
+            ⚙️ Ayarlar
+          </button>
+        </div>
+        <button class="modal-close-menu text-amber-400 hover:text-amber-100 text-xl font-bold p-1 leading-none">✕</button>
+      </div>
+
+      <!-- Sekme 1: Anki & Quizlet Toplu İçe Aktarma -->
+      <div id="tabContentImport" class="p-4 space-y-3 overflow-y-auto flex-1 text-xs">
+        <p class="text-amber-300/90">
+          Quizlet veya Anki kelime çiftlerini yapıştırın. Sistem bunları otomatik tanıyıp 20'şerli sayfalara böler.
+        </p>
+
+        <div class="flex gap-2">
+          <button id="btnSampleQuizlet" type="button" class="px-2 py-1 bg-amber-900/60 hover:bg-amber-800 text-[11px] rounded text-amber-200 border border-amber-700">
+            Örnek Quizlet Metni
+          </button>
+          <button id="btnSampleAnki" type="button" class="px-2 py-1 bg-amber-900/60 hover:bg-amber-800 text-[11px] rounded text-amber-200 border border-amber-700">
+            Örnek Anki Metni
+          </button>
+        </div>
+
+        <textarea id="bulkImportText" rows="6" placeholder="Örnek Formatlar:
+diligent&#9;çalışkan, gayretli
+benevolent - yardımsever
+crucial, hayati önem taşıyan" class="w-full bg-amber-900/50 border border-amber-600/60 rounded-xl p-3 font-mono text-white placeholder-amber-400/40 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"></textarea>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-amber-200">
+            <input type="checkbox" id="checkAppendMode" class="rounded bg-amber-900 border-amber-600 text-amber-500" checked>
+            <span>Mevcut sayfaların sonuna ekle</span>
+          </label>
+          <button id="btnExecuteImport" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 font-bold text-white rounded-xl shadow-md active:scale-95 transition">
+            İçe Aktar
+          </button>
+        </div>
+      </div>
+
+      <!-- Sekme 2: Tek Kelime Ekle -->
+      <div id="tabContentAddOne" class="p-4 space-y-4 overflow-y-auto flex-1 text-xs hidden">
+        <form id="formAddSingleWord" class="space-y-3">
+          <div>
+            <label class="block font-semibold text-amber-300 mb-1">İngilizce Kelime</label>
+            <input type="text" id="inputEn" required placeholder="Örn: Resilience" class="w-full bg-amber-900/50 border border-amber-600/60 rounded-xl px-3 py-2 text-white placeholder-amber-400/40 focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+          <div>
+            <label class="block font-semibold text-amber-300 mb-1">Türkçe Anlamı</label>
+            <input type="text" id="inputTr" required placeholder="Örn: Kendini toparlama gücü" class="w-full bg-amber-900/50 border border-amber-600/60 rounded-xl px-3 py-2 text-white placeholder-amber-400/40 focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-600 font-bold text-white rounded-xl shadow-md active:scale-95 transition">
+              Deftere Ekle
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sekme 3: Defter Ayarları & Sayfa İşlemleri -->
+      <div id="tabContentSettings" class="p-4 space-y-3 overflow-y-auto flex-1 text-xs hidden">
+        
+        <!-- Örtücü Kağıt Modu -->
+        <div class="bg-amber-900/40 p-3 rounded-xl border border-amber-700/50">
+          <label class="block font-semibold text-amber-200 mb-2">Örtücü Kağıt Modu:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-cover-mode="tr" class="cover-mode-btn p-2 rounded-lg border text-center font-medium transition bg-amber-600 text-white border-amber-400">
+              Türkçeyi Ört
+            </button>
+            <button type="button" data-cover-mode="en" class="cover-mode-btn p-2 rounded-lg border text-center font-medium transition bg-amber-950/70 text-amber-300 border-amber-800">
+              İngilizceyi Ört
+            </button>
+            <button type="button" data-cover-mode="none" class="cover-mode-btn p-2 rounded-lg border text-center font-medium transition bg-amber-950/70 text-amber-300 border-amber-800">
+              Örtücü Yok
+            </button>
+          </div>
+        </div>
+
+        <!-- Hızlı Sayfa Atlama -->
+        <div class="bg-amber-900/40 p-3 rounded-xl border border-amber-700/50">
+          <label class="block font-semibold text-amber-200 mb-1">Doğrudan Sayfaya Atla:</label>
+          <div class="flex items-center gap-2">
+            <input type="range" id="settingsPageSlider" min="1" max="1" value="1" class="w-full accent-amber-500">
+            <span id="settingsPageSliderVal" class="font-bold text-amber-300 w-12 text-center text-sm font-mono">1</span>
+            <button type="button" id="btnSettingsJumpPage" class="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg active:scale-95 transition">Git</button>
+          </div>
+        </div>
+
+        <!-- Sayfa Silme -->
+        <div class="bg-amber-900/40 p-3 rounded-xl border border-amber-700/50 flex items-center justify-between">
+          <div>
+            <span class="block font-semibold text-rose-300">Bu Sayfayı Sil</span>
+            <span class="text-[11px] text-amber-400/70">Mevcut 20 kelimelik sayfayı defterden kaldırır</span>
+          </div>
+          <button type="button" id="btnDeleteCurrentPage" class="px-3 py-1.5 bg-rose-900 hover:bg-rose-800 text-rose-100 rounded-lg font-bold active:scale-95 transition">
+            Sayfayı Sil
+          </button>
+        </div>
+
+        <!-- Yedekleme & Sıfırlama -->
+        <div class="bg-amber-900/40 p-3 rounded-xl border border-amber-700/50 space-y-2">
+          <span class="block font-semibold text-amber-200">Yedekleme & Sıfırlama:</span>
+          <div class="flex gap-2">
+            <button type="button" id="btnExportJSON" class="flex-1 py-1.5 px-2 bg-amber-800 hover:bg-amber-700 rounded-lg text-amber-200 text-center font-medium active:scale-95 transition">
+              💾 JSON İndir
+            </button>
+            <button type="button" id="btnResetDefaultWords" class="flex-1 py-1.5 px-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 rounded-lg text-center font-medium active:scale-95 transition">
+              ⚠ Sıfırla
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-3 bg-black/30 border-t border-amber-800/60 flex justify-end">
+        <button type="button" class="modal-close-menu px-5 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-bold text-xs">
+          Kapat
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Günlük Ezber Hatırlatıcısı & iPhone Takvim / Bildirim -->
+  <div id="modalReminder" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-amber-950 border border-amber-700 text-amber-100 rounded-2xl max-w-md w-full p-5 shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between border-b border-amber-800/80 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔔</span>
+          <h3 class="font-bold text-base text-amber-200">Günlük Ezber Bildirimi</h3>
+        </div>
+        <button class="modal-close-reminder text-amber-400 hover:text-amber-200 text-xl font-bold leading-none">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs text-amber-200/90 leading-relaxed">
+        
+        <!-- Web Push Bildirimi -->
+        <div class="bg-amber-900/40 p-3 rounded-xl border border-amber-800/70 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-amber-100 flex items-center gap-1.5">
+              <span>📱</span> Web / Tarayıcı Bildirimi
+            </span>
+            <span id="notifStatusTag" class="text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700 font-mono">
+              Bekliyor
+            </span>
+          </div>
+          <p class="text-[11px] text-amber-300/80">
+            Belirlediğiniz saatte defteri açıp tekrar yapmanız için tarayıcı üzerinden uyarı gönderir.
+          </p>
+          <div class="flex items-center gap-2 pt-1">
+            <input type="time" id="reminderTimeInput" value="20:00" class="bg-amber-950 border border-amber-700 rounded-lg px-2.5 py-1 text-white font-mono text-xs focus:ring-1 focus:ring-amber-400">
+            <button id="btnEnableWebNotif" class="flex-1 py-1.5 bg-amber-700 hover:bg-amber-600 font-bold text-white rounded-lg active:scale-95 transition">
+              İzin Ver & Kur
+            </button>
+          </div>
+          <button id="btnTestNotification" class="w-full mt-1 py-1.5 bg-amber-800/80 hover:bg-amber-700 text-amber-200 border border-amber-700/60 rounded-lg font-semibold active:scale-95 transition flex items-center justify-center gap-1.5">
+            <span>⚡</span> Test Bildirimi Gönder
+          </button>
+        </div>
+
+        <!-- iPhone 17 Pro Max İçin Yerel Takvim (.ics) -->
+        <div class="bg-indigo-950/40 p-3 rounded-xl border border-indigo-800/70 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-200 flex items-center gap-1.5">
+              <span>📅</span> iPhone Takvime / Hatırlatıcıya Ekle
+            </span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-900 text-indigo-300 font-bold">Önerilen</span>
+          </div>
+          <p class="text-[11px] text-indigo-200/80">
+            iPhone'unuzun yerel Takvim veya Hatırlatıcılar uygulamasına her gün tekrarlayan alarm ekler.
+          </p>
+          <button id="btnDownloadIcsReminder" class="w-full py-2 bg-indigo-700 hover:bg-indigo-600 font-bold text-white rounded-lg shadow-md active:scale-95 transition flex items-center justify-center gap-2">
+            <span>🗓️</span> iPhone Takvimine Tek Tıkla Ekle (.ics)
+          </button>
+        </div>
+
+      </div>
+
+      <div class="pt-1 flex justify-end">
+        <button class="modal-close-reminder px-5 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded-xl font-bold text-xs">
+          Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Rehber / İpuçları -->
+  <div id="modalHelp" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-amber-950 border border-amber-700 text-amber-100 rounded-2xl max-w-md w-full p-5 shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between border-b border-amber-800/70 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📖</span>
+          <h3 class="font-bold text-base text-amber-200">Nasıl Kullanılır?</h3>
+        </div>
+        <button class="modal-close-help text-amber-400 hover:text-amber-200 text-xl font-bold leading-none">✕</button>
+      </div>
+
+      <div class="space-y-2.5 text-xs text-amber-200/90 leading-relaxed">
+        <div class="flex items-start gap-2.5 bg-amber-900/40 p-2.5 rounded-xl border border-amber-800/60">
+          <span class="text-lg">👉</span>
+          <div>
+            <strong class="text-amber-100 block mb-0.5">Sağa Dokun (Aç & Dinle):</strong>
+            Örtücü A4 kağıdı 1 kelime aşağı kayarak anlamı açar ve İngilizcesini doğal sesle okur.
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5 bg-amber-900/40 p-2.5 rounded-xl border border-amber-800/60">
+          <span class="text-lg">👈</span>
+          <div>
+            <strong class="text-amber-100 block mb-0.5">Sola Dokun (Kapat):</strong>
+            Örtücü 1 kelime yukarı çıkarak anlamı tekrar kapatır.
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5 bg-amber-900/40 p-2.5 rounded-xl border border-amber-800/60">
+          <span class="text-lg">⏳</span>
+          <div>
+            <strong class="text-amber-100 block mb-0.5">Basılı Tut (Sayfa Değiştir):</strong>
+            Sağa uzun basınca sonraki sayfaya, sola uzun basınca önceki sayfaya geçer. Veya başlıktaki <strong>‹ Sayfa ›</strong> butonlarına tıklayabilirsiniz.
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5 bg-amber-900/40 p-2.5 rounded-xl border border-amber-800/60">
+          <span class="text-lg">⚙️</span>
+          <div>
+            <strong class="text-amber-100 block mb-0.5">Akıllı Menü:</strong>
+            Sağ üstteki yuvarlak butona basınca yana doğru tüm araçlar açılır; butonun kendisi ise Ayarlar menüsüne dönüşür.
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button class="modal-close-help w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 font-bold text-white rounded-xl shadow-lg text-xs transition active:scale-98">
+          Tamamdır! 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirim Kutusu -->
+  <div id="toastNotification" class="fixed bottom-6 right-6 z-50 bg-stone-900/95 text-stone-100 border border-amber-500/50 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <span id="toastIcon">✨</span>
+    <span id="toastMessage">İşlem başarılı</span>
+  </div>
+
+  <script>
+    /* Web Audio API Gerçek Zamanlı Ses Motoru */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playSlide() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const bufferSize = this.ctx.sampleRate * 0.1;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+          }
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(800 + Math.random() * 250, this.ctx.currentTime);
+          filter.Q.setValueAtTime(2.0, this.ctx.currentTime);
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.14, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      playPageFlip() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const duration = 0.2;
+          const bufferSize = this.ctx.sampleRate * duration;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+          }
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(2200, this.ctx.currentTime + 0.08);
+          filter.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + duration);
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      playLampClick() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(75, this.ctx.currentTime + 0.045);
+          gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.045);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.045);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      playBellChime() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(440, this.ctx.currentTime + 0.5);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.5);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* Web Speech API Doğal Telaffuz Motoru */
+    class SpeechEngine {
+      constructor() {
+        this.speechEnabled = true;
+        this.cachedVoice = null;
+        this.initVoices();
+      }
+
+      initVoices() {
+        if (!('speechSynthesis' in window)) return;
+        const load = () => {
+          const voices = window.speechSynthesis.getVoices();
+          const enVoices = voices.filter(v => v.lang.startsWith('en'));
+          const premium = enVoices.find(v => /samantha|daniel|siri|natural|enhanced|google us english|karen/i.test(v.name));
+          this.cachedVoice = premium || enVoices.find(v => v.lang === 'en-US') || enVoices[0] || null;
+        };
+        load();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = load;
+        }
+      }
+
+      speak(text) {
+        if (!this.speechEnabled || !('speechSynthesis' in window)) return;
+        if (!text) return;
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (this.cachedVoice) {
+          utterance.voice = this.cachedVoice;
+        }
+        utterance.lang = 'en-US';
+        utterance.rate = 0.92;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    const speech = new SpeechEngine();
+
+    const DEFAULT_WORDS = [
+      // Sayfa 1
+      { id: "w1", en: "Serendipity", tr: "Mutlu tesadüf, şans eseri güzellik" },
+      { id: "w2", en: "Resilience", tr: "Direnç, kendini toparlama gücü" },
+      { id: "w3", en: "Benevolent", tr: "İyiliksever, cömert, hayırsever" },
+      { id: "w4", en: "Crucial", tr: "Hayati derecede önemli" },
+      { id: "w5", en: "Diligent", tr: "Çalışkan, özenli, gayretli" },
+      { id: "w6", en: "Eloquent", tr: "Güzel ve etkili konuşan" },
+      { id: "w7", en: "Fluctuate", tr: "Dalgalanmak, istikrarsız olmak" },
+      { id: "w8", en: "Gratitude", tr: "Minnettarlık, şükran duyma" },
+      { id: "w9", en: "Hinder", tr: "Engel olmak, aksatmak" },
+      { id: "w10", en: "Inevitable", tr: "Kaçınılmaz, önüne geçilemez" },
+      { id: "w11", en: "Judicious", tr: "Sağduyulu, mantıklı, adil" },
+      { id: "w12", en: "Keen", tr: "Hevesli, keskin, meraklı" },
+      { id: "w13", en: "Lucid", tr: "Berrak, açık, kolay anlaşılır" },
+      { id: "w14", en: "Meticulous", tr: "Kılı kırk yaran, çok titiz" },
+      { id: "w15", en: "Novel", tr: "Yeni, alışılmadık, özgün" },
+      { id: "w16", en: "Obscure", tr: "Belirsiz, karanlık, anlaşılması güç" },
+      { id: "w17", en: "Plausible", tr: "Akla yatkın, makul, olası" },
+      { id: "w18", en: "Quench", tr: "Dindirmek, söndürmek (susuzluk)" },
+      { id: "w19", en: "Subtle", tr: "Hafif, göze çarpmayan, ince" },
+      { id: "w20", en: "Tenable", tr: "Savunulabilir, mantıklı, geçerli" },
+
+      // Sayfa 2
+      { id: "w21", en: "Ubiquitous", tr: "Her yerde hazır bulunan, yaygın" },
+      { id: "w22", en: "Vulnerable", tr: "Kırılgan, hassas, savunmasız" },
+      { id: "w23", en: "Widespread", tr: "Geniş çapta yayılan, genel" },
+      { id: "w24", en: "Yield", tr: "Ürün vermek, kazanç sağlamak" },
+      { id: "w25", en: "Zealous", tr: "Aşırı gayretli, tutkulu, şevkli" },
+      { id: "w26", en: "Advocate", tr: "Savunmak, desteklemek" },
+      { id: "w27", en: "Bolster", tr: "Güçlendirmek, destek çıkmak" },
+      { id: "w28", en: "Cohesive", tr: "Birbirine kenetli, uyumlu" },
+      { id: "w29", en: "Deteriorate", tr: "Kötüleşmek, sağlığı bozulmak" },
+      { id: "w30", en: "Empirical", tr: "Deneysel, tecrübeye dayalı" },
+      { id: "w31", en: "Foster", tr: "Büyütmek, geliştirmek, teşvik etmek" },
+      { id: "w32", en: "Grim", tr: "İç karartıcı, acımasız, sert" },
+      { id: "w33", en: "Hostile", tr: "Düşmanca, elverişsiz, saldırgan" },
+      { id: "w34", en: "Integrity", tr: "Dürüstlük, ahlaki bütünlük" },
+      { id: "w35", en: "Justify", tr: "Haklı çıkarmak, mazur göstermek" },
+      { id: "w36", en: "Lethargic", tr: "Uyuşuk, bitkin, cansız" },
+      { id: "w37", en: "Mitigate", tr: "Hafifletmek, acısını azaltmak" },
+      { id: "w38", en: "Nurture", tr: "Beslemek, ilgiyle yetiştirmek" },
+      { id: "w39", en: "Overlook", tr: "Gözden kaçırmak, hoş görmek" },
+      { id: "w40", en: "Profound", tr: "Derin, şiddetli, kapsamlı" }
+    ];
+
+    const State = {
+      pages: [],
+      currentPageIndex: 0,
+      currentStep: 0,
+      coverMode: 'tr',
+      lampActive: false,
+      speechEnabled: true,
+      dockExpanded: false,
+      reminderTime: '20:00',
+
+      init() {
+        this.loadSettings();
+        this.loadVocabulary();
+      },
+
+      loadSettings() {
+        const savedCover = localStorage.getItem('kd_cover_mode');
+        if (savedCover) this.coverMode = savedCover;
+
+        const savedLamp = localStorage.getItem('kd_lamp_active');
+        if (savedLamp !== null) this.lampActive = savedLamp === 'true';
+
+        const savedSpeech = localStorage.getItem('kd_speech_enabled');
+        if (savedSpeech !== null) {
+          this.speechEnabled = savedSpeech === 'true';
+          speech.speechEnabled = this.speechEnabled;
+        }
+
+        const savedPage = localStorage.getItem('kd_current_page');
+        if (savedPage) this.currentPageIndex = parseInt(savedPage, 10) || 0;
+
+        const savedReminder = localStorage.getItem('kd_reminder_time');
+        if (savedReminder) this.reminderTime = savedReminder;
+      },
+
+      saveSettings() {
+        localStorage.setItem('kd_cover_mode', this.coverMode);
+        localStorage.setItem('kd_lamp_active', this.lampActive);
+        localStorage.setItem('kd_speech_enabled', this.speechEnabled);
+        localStorage.setItem('kd_current_page', this.currentPageIndex);
+        localStorage.setItem('kd_reminder_time', this.reminderTime);
+      },
+
+      loadVocabulary() {
+        const stored = localStorage.getItem('kd_vocabulary_data_v4');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              this.pages = parsed;
+              return;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        this.organizeIntoPages(DEFAULT_WORDS);
+        this.saveVocabulary();
+      },
+
+      saveVocabulary() {
+        localStorage.setItem('kd_vocabulary_data_v4', JSON.stringify(this.pages));
+      },
+
+      organizeIntoPages(flatWordList) {
+        const pages = [];
+        for (let i = 0; i < flatWordList.length; i += 20) {
+          pages.push(flatWordList.slice(i, i + 20));
+        }
+        if (pages.length === 0) {
+          pages.push([]);
+        }
+        this.pages = pages;
+      }
+    };
+
+    const notebookContainer = document.getElementById('notebookContainer');
+    const vocabRowsContainer = document.getElementById('vocabRowsContainer');
+    const blinderSheet = document.getElementById('blinderSheet');
+    const blinderStepText = document.getElementById('blinderStepText');
+    const blinderStatusBadge = document.getElementById('blinderStatusBadge');
+    const spiralHolesContainer = document.getElementById('spiralHolesContainer');
+    const notebookPageDisplay = document.getElementById('notebookPageDisplay');
+    const dockPageIndicator = document.getElementById('dockPageIndicator');
+    const settingsPageSlider = document.getElementById('settingsPageSlider');
+    const settingsPageSliderVal = document.getElementById('settingsPageSliderVal');
+
+    function renderSpiralBindings() {
+      spiralHolesContainer.innerHTML = '';
+      const holeCount = 14;
+      for (let i = 0; i < holeCount; i++) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative flex items-center justify-center';
+        const hole = document.createElement('div');
+        hole.className = 'spiral-hole';
+        const ring = document.createElement('div');
+        ring.className = 'spiral-ring';
+        wrapper.appendChild(hole);
+        wrapper.appendChild(ring);
+        spiralHolesContainer.appendChild(wrapper);
+      }
+    }
+
+    function renderNotebookPage() {
+      if (State.currentPageIndex >= State.pages.length) {
+        State.currentPageIndex = Math.max(0, State.pages.length - 1);
+      }
+
+      const totalPages = Math.max(1, State.pages.length);
+      const currentPageNum = State.currentPageIndex + 1;
+      const pageText = `${currentPageNum} / ${totalPages}`;
+
+      notebookPageDisplay.textContent = pageText;
+      dockPageIndicator.textContent = `${currentPageNum}/${totalPages}`;
+      document.getElementById('notebookDateDisplay').textContent = new Date().toLocaleDateString('tr-TR');
+
+      settingsPageSlider.max = totalPages;
+      settingsPageSlider.value = currentPageNum;
+      settingsPageSliderVal.textContent = currentPageNum;
+
+      const currentWords = State.pages[State.currentPageIndex] || [];
+      vocabRowsContainer.innerHTML = '';
+
+      for (let i = 0; i < 20; i++) {
+        const item = currentWords[i] || null;
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-12 items-center text-xs sm:text-sm font-hand tracking-wide border-b border-transparent relative';
+        row.style.height = 'var(--row-h)';
+
+        // 1. Sıra Numarası
+        const colNum = document.createElement('div');
+        colNum.className = 'col-span-1 text-center font-sans text-[11px] sm:text-xs text-slate-400 font-semibold select-none';
+        colNum.textContent = i + 1;
+
+        // 2. İngilizce Sütunu
+        const colEn = document.createElement('div');
+        colEn.className = 'col-span-5 pl-1.5 sm:pl-2 font-bold text-slate-800 truncate pr-1 text-[13px] sm:text-base flex items-center';
+
+        // 3. Türkçe Sütunu
+        const colTr = document.createElement('div');
+        colTr.className = 'col-span-6 pl-1.5 sm:pl-2 text-indigo-950 truncate flex items-center justify-between pr-2 text-[13px] sm:text-base';
+
+        if (item) {
+          const enSpan = document.createElement('span');
+          enSpan.className = 'truncate cursor-pointer hover:text-indigo-600 transition';
+          enSpan.textContent = item.en;
+          enSpan.title = 'Seslendir';
+          enSpan.onclick = (e) => {
+            e.stopPropagation();
+            speech.speak(item.en);
+          };
+          colEn.appendChild(enSpan);
+
+          const trSpan = document.createElement('span');
+          trSpan.className = 'truncate';
+          trSpan.textContent = item.tr;
+          colTr.appendChild(trSpan);
+        }
+
+        row.appendChild(colNum);
+        row.appendChild(colEn);
+        row.appendChild(colTr);
+        vocabRowsContainer.appendChild(row);
+      }
+
+      updateBlinderPosition(false);
+      State.saveSettings();
+    }
+
+    function updateBlinderPosition(playSound = true) {
+      if (State.coverMode === 'none') {
+        blinderSheet.style.display = 'none';
+        blinderStatusBadge.textContent = 'Açık';
+        blinderStatusBadge.className = 'text-[9px] uppercase px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-sans border border-emerald-300';
+        return;
+      }
+
+      blinderSheet.style.display = 'flex';
+      blinderStatusBadge.textContent = 'Örtülü';
+      blinderStatusBadge.className = 'text-[9px] uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-sans border border-amber-300';
+
+      if (State.coverMode === 'tr') {
+        blinderSheet.style.left = 'auto';
+        blinderSheet.style.right = '0px';
+        blinderSheet.style.width = '50%';
+      } else if (State.coverMode === 'en') {
+        blinderSheet.style.left = '8.33%';
+        blinderSheet.style.right = 'auto';
+        blinderSheet.style.width = '41.67%';
+      }
+
+      const rowHeight = vocabRowsContainer.firstElementChild 
+        ? vocabRowsContainer.firstElementChild.offsetHeight 
+        : (window.innerWidth < 640 ? 38 : 40);
+
+      const translateY = State.currentStep * rowHeight;
+      blinderSheet.style.transform = `translateY(${translateY}px)`;
+      blinderStepText.textContent = `${State.currentStep} / 20`;
+
+      if (playSound) {
+        sound.playSlide();
+      }
+    }
+
+    function stepDown() {
+      if (State.coverMode === 'none') return;
+      if (State.currentStep < 20) {
+        State.currentStep++;
+        updateBlinderPosition(true);
+
+        const currentPage = State.pages[State.currentPageIndex];
+        const revealedWord = currentPage ? currentPage[State.currentStep - 1] : null;
+        if (revealedWord && revealedWord.en && speech.speechEnabled) {
+          speech.speak(revealedWord.en);
+        }
+      } else {
+        showToast("Tüm kelimeler açıldı!", "🎉");
+      }
+    }
+
+    function stepUp() {
+      if (State.coverMode === 'none') return;
+      if (State.currentStep > 0) {
+        State.currentStep--;
+        updateBlinderPosition(true);
+      } else {
+        showToast("Tüm kelimeler zaten örtülü", "🛡️");
+      }
+    }
+
+    function changePage(delta) {
+      const newIndex = State.currentPageIndex + delta;
+      if (newIndex >= 0 && newIndex < State.pages.length) {
+        notebookContainer.classList.add('scale-[0.98]', 'opacity-90');
+        sound.playPageFlip();
+        
+        if ('vibrate' in navigator) {
+          navigator.vibrate(35);
+        }
+
+        setTimeout(() => {
+          State.currentPageIndex = newIndex;
+          State.currentStep = 0;
+          renderNotebookPage();
+          notebookContainer.classList.remove('scale-[0.98]', 'opacity-90');
+        }, 120);
+      } else {
+        showToast(delta > 0 ? "Son sayfadasınız" : "İlk sayfadasınız", "ℹ️");
+      }
+    }
+
+    function shuffleCurrentPage() {
+      const page = State.pages[State.currentPageIndex];
+      if (!page || page.length <= 1) {
+        showToast("Karıştırılacak yeterli kelime yok", "ℹ️");
+        return;
+      }
+
+      for (let i = page.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [page[i], page[j]] = [page[j], page[i]];
+      }
+
+      State.currentStep = 0;
+      sound.playPageFlip();
+      State.saveVocabulary();
+      renderNotebookPage();
+      showToast("Kelimeler rastgele karıştırıldı! 🔀", "🎲");
+    }
+
+    function sortAlphabetically() {
+      const page = State.pages[State.currentPageIndex];
+      if (!page || page.length <= 1) return;
+
+      page.sort((a, b) => a.en.localeCompare(b.en, 'en', { sensitivity: 'base' }));
+      State.currentStep = 0;
+      sound.playPageFlip();
+      State.saveVocabulary();
+      renderNotebookPage();
+      showToast("Kelimeler A-Z alfabetik dizildi! 🔤", "✨");
+    }
+
+    function toggleDeskLamp() {
+      State.lampActive = !State.lampActive;
+      sound.playLampClick();
+      applyLampMode();
+      State.saveSettings();
+      showToast(State.lampActive ? "Masa lambası yakıldı 🕯️️" : "Masa lambası söndürüldü ☀", "💡");
+    }
+
+    function applyLampMode() {
+      const icon = document.getElementById('dockLampIcon');
+      if (State.lampActive) {
+        document.body.classList.add('lamp-active');
+        icon.textContent = '🌙';
+      } else {
+        document.body.classList.remove('lamp-active');
+        icon.textContent = '💡';
+      }
+    }
+
+    function toggleSpeechEngine() {
+      State.speechEnabled = !State.speechEnabled;
+      speech.speechEnabled = State.speechEnabled;
+      State.saveSettings();
+      const icon = document.getElementById('dockTtsIcon');
+      if (State.speechEnabled) {
+        icon.textContent = '🔊';
+        showToast("Doğal telaffuz sesi açıldı", "🔊");
+      } else {
+        icon.textContent = '🔇';
+        showToast("Telaffuz sesi kapatıldı", "🔇");
+      }
+    }
+
+    function setupSmartDock() {
+      const dockContainer = document.getElementById('smartDockContainer');
+      const triggerBtn = document.getElementById('dockTriggerBtn');
+      const triggerIcon = document.getElementById('dockTriggerIcon');
+      const expandingBelt = document.getElementById('dockExpandingBelt');
+      const menuModal = document.getElementById('modalMenu');
+
+      function openDock() {
+        State.dockExpanded = true;
+        expandingBelt.classList.add('dock-expanded');
+        triggerIcon.textContent = '⚙️';
+        triggerIcon.style.transform = 'rotate(90deg)';
+        triggerBtn.title = "Ayarları Aç";
+      }
+
+      function closeDock() {
+        State.dockExpanded = false;
+        expandingBelt.classList.remove('dock-expanded');
+        triggerIcon.textContent = '✦';
+        triggerIcon.style.transform = 'rotate(0deg)';
+        triggerBtn.title = "Menüyü Aç";
+      }
+
+      // Ana Butona Tıklama Davranışı
+      triggerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (!State.dockExpanded) {
+          openDock();
+        } else {
+          // Açıkken tıklandığında Ayarlar Modalı açılır
+          menuModal.classList.remove('hidden');
+          closeDock();
+        }
+      };
+
+      // Dışarıya Tıklanınca Otomatik Kapanma
+      window.addEventListener('click', (e) => {
+        if (State.dockExpanded && !dockContainer.contains(e.target)) {
+          closeDock();
+        }
+      });
+
+      // Genişleyen Dock İçi Buton Dinleyicileri
+      document.getElementById('dockBtnPrevPage').onclick = (e) => {
+        e.stopPropagation();
+        changePage(-1);
+      };
+      document.getElementById('dockBtnNextPage').onclick = (e) => {
+        e.stopPropagation();
+        changePage(1);
+      };
+      document.getElementById('dockBtnShuffle').onclick = (e) => {
+        e.stopPropagation();
+        shuffleCurrentPage();
+      };
+      document.getElementById('dockBtnSort').onclick = (e) => {
+        e.stopPropagation();
+        sortAlphabetically();
+      };
+      document.getElementById('dockBtnTTS').onclick = (e) => {
+        e.stopPropagation();
+        toggleSpeechEngine();
+      };
+      document.getElementById('dockBtnLamp').onclick = (e) => {
+        e.stopPropagation();
+        toggleDeskLamp();
+      };
+      document.getElementById('dockBtnReminder').onclick = (e) => {
+        e.stopPropagation();
+        document.getElementById('modalReminder').classList.remove('hidden');
+        closeDock();
+      };
+      document.getElementById('dockBtnHelp').onclick = (e) => {
+        e.stopPropagation();
+        document.getElementById('modalHelp').classList.remove('hidden');
+        closeDock();
+      };
+
+      // Defter Başlığındaki Sayfa Butonları
+      document.getElementById('btnPaperPrevPage').onclick = () => changePage(-1);
+      document.getElementById('btnPaperNextPage').onclick = () => changePage(1);
+    }
+
+    function setupTouchAndGestureHandlers() {
+      const leftZone = document.getElementById('leftTapZone');
+      const rightZone = document.getElementById('rightTapZone');
+      const rippleContainer = document.getElementById('touchRippleContainer');
+
+      function setupZone(zone, isRightSide) {
+        let pressTimer = null;
+        let isLongPress = false;
+        let isScrolling = false;
+        let startX = 0;
+        let startY = 0;
+
+        const startPress = (e) => {
+          isLongPress = false;
+          isScrolling = false;
+          const touch = e.touches ? e.touches[0] : e;
+          startX = touch.clientX;
+          startY = touch.clientY;
+
+          pressTimer = setTimeout(() => {
+            if (!isScrolling) {
+              isLongPress = true;
+              createRipple(startX, startY);
+              if (isRightSide) {
+                changePage(1);
+              } else {
+                changePage(-1);
+              }
+            }
+          }, 440);
+        };
+
+        const movePress = (e) => {
+          if (!startX && !startY) return;
+          const touch = e.touches ? e.touches[0] : e;
+          const dx = Math.abs(touch.clientX - startX);
+          const dy = Math.abs(touch.clientY - startY);
+
+          // Dikey kaydırmaya kesintisiz izin ver
+          if (dx > 10 || dy > 10) {
+            isScrolling = true;
+            if (pressTimer) {
+              clearTimeout(pressTimer);
+              pressTimer = null;
+            }
+          }
+        };
+
+        const cancelPress = () => {
+          if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+        };
+
+        const endPress = () => {
+          if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+
+          if (!isLongPress && !isScrolling) {
+            if (isRightSide) {
+              stepDown();
+            } else {
+              stepUp();
+            }
+          }
+        };
+
+        zone.addEventListener('touchstart', startPress, { passive: true });
+        zone.addEventListener('touchmove', movePress, { passive: true });
+        zone.addEventListener('touchend', endPress);
+        zone.addEventListener('touchcancel', cancelPress);
+
+        zone.addEventListener('mousedown', startPress);
+        zone.addEventListener('mousemove', movePress);
+        zone.addEventListener('mouseup', endPress);
+        zone.addEventListener('mouseleave', cancelPress);
+      }
+
+      setupZone(leftZone, false);
+      setupZone(rightZone, true);
+
+      function createRipple(x, y) {
+        const rect = notebookContainer.getBoundingClientRect();
+        const ripple = document.createElement('div');
+        ripple.className = 'absolute rounded-full bg-amber-500/25 pointer-events-none ripple-active';
+        const size = 120;
+        ripple.style.width = `${size}px`;
+        ripple.style.height = `${size}px`;
+        ripple.style.left = `${x - rect.left - size / 2}px`;
+        ripple.style.top = `${y - rect.top - size / 2}px`;
+        rippleContainer.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 450);
+      }
+    }
+
+    function setupReminderEngine() {
+      const modal = document.getElementById('modalReminder');
+      const timeInput = document.getElementById('reminderTimeInput');
+      const statusTag = document.getElementById('notifStatusTag');
+
+      timeInput.value = State.reminderTime;
+
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          statusTag.textContent = 'Aktif ✓';
+          statusTag.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono';
+        }
+      }
+
+      document.querySelectorAll('.modal-close-reminder').forEach(btn => {
+        btn.onclick = () => modal.classList.add('hidden');
+      });
+
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      };
+
+      document.getElementById('btnEnableWebNotif').onclick = async () => {
+        State.reminderTime = timeInput.value;
+        State.saveSettings();
+
+        if (!('Notification' in window)) {
+          showToast("Tarayıcınız Web Bildirimlerini desteklemiyor", "⚠️");
+          return;
+        }
+
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          statusTag.textContent = 'Aktif ✓';
+          statusTag.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono';
+          sound.playBellChime();
+          showToast(`Her gün saat ${State.reminderTime}'de bildirim kuruldu! 🔔`, "✅");
+        } else {
+          showToast("Bildirim izni verilmedi", "⚠️");
+        }
+      };
+
+      document.getElementById('btnTestNotification').onclick = async () => {
+        sound.playBellChime();
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification("Kelime Defteri 📖", {
+            body: "Bugünkü 20 kelimeni tekrar etme zamanı! Sayfalar seni bekliyor.",
+            icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%234a260f'/%3E%3Ccircle cx='256' cy='256' r='180' fill='%23faf7ee'/%3E%3C/svg%3E"
+          });
+          showToast("Test bildirimi gönderildi! 🔔", "✨");
+        } else if ('Notification' in window) {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted') {
+            new Notification("Kelime Defteri 📖", {
+              body: "Bildirimler aktif edildi! Her gün sana hatırlatacağız."
+            });
+            showToast("İzin alındı ve bildirim iletildi!", "🔔");
+          } else {
+            showToast("Lütfen önce bildirim izni verin!", "⚠️");
+          }
+        }
+      };
+
+      // iPhone 17 Pro Max İçin Tekrarlayan Takvim Kaydı (.ics)
+      document.getElementById('btnDownloadIcsReminder').onclick = () => {
+        const timeVal = timeInput.value || "20:00";
+        const [hours, minutes] = timeVal.split(':');
+
+        const now = new Date();
+        const startYear = now.getFullYear();
+        const startMonth = String(now.getMonth() + 1).padStart(2, '0');
+        const startDay = String(now.getDate()).padStart(2, '0');
+        const dtstart = `${startYear}${startMonth}${startDay}T${hours.padStart(2, '0')}${minutes.padStart(2, '0')}00`;
+
+        const icsContent = [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//Kelime Defteri//Akilli Ezber Hatirlatici//TR",
+          "CALSCALE:GREGORIAN",
+          "METHOD:PUBLISH",
+          "BEGIN:VEVENT",
+          `UID:kelime-defteri-${Date.now()}@kelimedefteri.local`,
+          `DTSTAMP:${startYear}${startMonth}${startDay}T120000Z`,
+          `DTSTART;TZID=Europe/Istanbul:${dtstart}`,
+          `DURATION:PT15M`,
+          "RRULE:FREQ=DAILY",
+          "SUMMARY:📖 Kelime Defteri - Günlük Ezber Vakti",
+          "DESCRIPTION:Bugünkü 20 İngilizce kelimeni tekrar etme zamanı!",
+          "BEGIN:VALARM",
+          "TRIGGER:-PT0M",
+          "ACTION:DISPLAY",
+          "DESCRIPTION:Kelime ezberleme zamanı geldi!",
+          "END:VALARM",
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\r\n");
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', 'Kelime_Defteri_Hatirlatici.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        sound.playBellChime();
+        showToast("Takvim dosyası indi! Dokunup 'Tümünü Ekle' diyebilirsiniz 📅", "🎉");
+      };
+    }
+
+    function setupMenuAndTabs() {
+      const modal = document.getElementById('modalMenu');
+      const tabBtnImport = document.getElementById('tabBtnImport');
+      const tabBtnAddOne = document.getElementById('tabBtnAddOne');
+      const tabBtnSettings = document.getElementById('tabBtnSettings');
+
+      const tabContentImport = document.getElementById('tabContentImport');
+      const tabContentAddOne = document.getElementById('tabContentAddOne');
+      const tabContentSettings = document.getElementById('tabContentSettings');
+
+      function switchTab(activeTab) {
+        [tabBtnImport, tabBtnAddOne, tabBtnSettings].forEach(b => {
+          b.className = 'px-3 py-2 text-xs font-bold border-b-2 border-transparent text-amber-400/70 hover:text-amber-200 transition';
+        });
+        [tabContentImport, tabContentAddOne, tabContentSettings].forEach(c => c.classList.add('hidden'));
+
+        if (activeTab === 'import') {
+          tabBtnImport.className = 'px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-200 transition';
+          tabContentImport.classList.remove('hidden');
+        } else if (activeTab === 'add') {
+          tabBtnAddOne.className = 'px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-200 transition';
+          tabContentAddOne.classList.remove('hidden');
+          document.getElementById('inputEn').focus();
+        } else {
+          tabBtnSettings.className = 'px-3 py-2 text-xs font-bold border-b-2 border-amber-400 text-amber-200 transition';
+          tabContentSettings.classList.remove('hidden');
+          updateSettingsTabUI();
+        }
+      }
+
+      tabBtnImport.onclick = () => switchTab('import');
+      tabBtnAddOne.onclick = () => switchTab('add');
+      tabBtnSettings.onclick = () => switchTab('settings');
+
+      document.querySelectorAll('.modal-close-menu').forEach(btn => {
+        btn.onclick = () => modal.classList.add('hidden');
+      });
+
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      };
+
+      document.querySelectorAll('.modal-close-help').forEach(btn => {
+        btn.onclick = () => document.getElementById('modalHelp').classList.add('hidden');
+      });
+
+      document.getElementById('modalHelp').onclick = (e) => {
+        if (e.target === document.getElementById('modalHelp')) {
+          document.getElementById('modalHelp').classList.add('hidden');
+        }
+      };
+
+      document.getElementById('formAddSingleWord').onsubmit = (e) => {
+        e.preventDefault();
+        const en = document.getElementById('inputEn').value.trim();
+        const tr = document.getElementById('inputTr').value.trim();
+        if (en && tr) {
+          let lastPage = State.pages[State.pages.length - 1];
+          if (!lastPage || lastPage.length >= 20) {
+            lastPage = [];
+            State.pages.push(lastPage);
+          }
+          lastPage.push({ id: 'w_' + Date.now(), en, tr });
+          State.saveVocabulary();
+          renderNotebookPage();
+          document.getElementById('inputEn').value = '';
+          document.getElementById('inputTr').value = '';
+          modal.classList.add('hidden');
+          showToast(`"${en}" deftere eklendi!`, "✅");
+        }
+      };
+
+      document.getElementById('btnExecuteImport').onclick = () => {
+        const text = document.getElementById('bulkImportText').value;
+        const append = document.getElementById('checkAppendMode').checked;
+        if (handleAnkiQuizletImport(text, append)) {
+          modal.classList.add('hidden');
+        }
+      };
+
+      document.getElementById('btnSampleQuizlet').onclick = () => {
+        document.getElementById('bulkImportText').value = 
+`Accomplish\tBaşarmak
+Benevolent\tİyiliksever
+Crucial\tÇok önemli
+Diligent\tÇalışkan
+Eloquent\tAkıcı konuşan`;
+      };
+
+      document.getElementById('btnSampleAnki').onclick = () => {
+        document.getElementById('bulkImportText').value = 
+`<div>Resilience</div>\tKendini toparlama gücü
+<div>Serendipity</div>\tMutlu tesadüf
+<div>Ubiquitous</div>\tHer yerde bulunan`;
+      };
+
+      document.querySelectorAll('.cover-mode-btn').forEach(btn => {
+        btn.onclick = () => {
+          State.coverMode = btn.dataset.coverMode;
+          State.saveSettings();
+          updateSettingsTabUI();
+          updateBlinderPosition(false);
+        };
+      });
+
+      settingsPageSlider.oninput = (e) => {
+        settingsPageSliderVal.textContent = e.target.value;
+      };
+
+      document.getElementById('btnSettingsJumpPage').onclick = () => {
+        const targetPage = parseInt(settingsPageSlider.value, 10) - 1;
+        if (targetPage >= 0 && targetPage < State.pages.length) {
+          State.currentPageIndex = targetPage;
+          State.currentStep = 0;
+          renderNotebookPage();
+          modal.classList.add('hidden');
+          showToast(`Sayfa ${targetPage + 1}'e geçildi`, "📖");
+        }
+      };
+
+      document.getElementById('btnDeleteCurrentPage').onclick = () => {
+        if (State.pages.length <= 1) {
+          State.pages[0] = [];
+        } else {
+          State.pages.splice(State.currentPageIndex, 1);
+          if (State.currentPageIndex >= State.pages.length) {
+            State.currentPageIndex = State.pages.length - 1;
+          }
+        }
+        State.saveVocabulary();
+        renderNotebookPage();
+        modal.classList.add('hidden');
+        showToast("Sayfa silindi.", "🗑️");
+      };
+
+      document.getElementById('btnExportJSON').onclick = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(State.pages, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", "kelime_defteri_yedek.json");
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+        showToast("JSON yedeği indirildi", "💾");
+      };
+
+      document.getElementById('btnResetDefaultWords').onclick = () => {
+        State.organizeIntoPages(DEFAULT_WORDS);
+        State.currentPageIndex = 0;
+        State.currentStep = 0;
+        State.saveVocabulary();
+        renderNotebookPage();
+        modal.classList.add('hidden');
+        showToast("Defter varsayılana sıfırlandı", "🔄");
+      };
+    }
+
+    function handleAnkiQuizletImport(text, appendMode) {
+      if (!text || !text.trim()) {
+        showToast("Lütfen metin girin!", "⚠️");
+        return false;
+      }
+
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const parsed = [];
+
+      for (let line of lines) {
+        line = line.replace(/<[^>]+>/g, '').replace(/\{\{c\d+::(.*?)\}\}/g, '$1');
+
+        let parts = null;
+        if (line.includes('\t')) parts = line.split('\t');
+        else if (line.includes(' - ')) parts = line.split(' - ');
+        else if (line.includes(' : ')) parts = line.split(' : ');
+        else if (line.includes(':')) parts = line.split(':');
+        else if (line.includes(' = ')) parts = line.split(' = ');
+        else if (line.includes(';')) parts = line.split(';');
+        else if (line.includes('-')) parts = line.split('-');
+        else if (line.includes(',')) parts = line.split(',');
+
+        if (parts && parts.length >= 2) {
+          const en = parts[0].trim();
+          const tr = parts.slice(1).join(' - ').trim();
+          if (en && tr) {
+            parsed.push({
+              id: 'imp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+              en,
+              tr
+            });
+          }
+        }
+      }
+
+      if (parsed.length === 0) {
+        showToast("Uygun formatta kelime çifti bulunamadı!", "⚠️");
+        return false;
+      }
+
+      if (appendMode) {
+        let allWords = State.pages.flat().concat(parsed);
+        State.organizeIntoPages(allWords);
+      } else {
+        State.organizeIntoPages(parsed);
+        State.currentPageIndex = 0;
+      }
+
+      State.saveVocabulary();
+      renderNotebookPage();
+      showToast(`${parsed.length} kelime deftere yüklendi!`, "🎉");
+      return true;
+    }
+
+    function updateSettingsTabUI() {
+      document.querySelectorAll('.cover-mode-btn').forEach(btn => {
+        if (btn.dataset.coverMode === State.coverMode) {
+          btn.className = 'cover-mode-btn p-2 rounded-lg border text-center font-bold transition bg-amber-600 text-white border-amber-400 shadow-md';
+        } else {
+          btn.className = 'cover-mode-btn p-2 rounded-lg border text-center font-medium transition bg-amber-950/70 text-amber-300 border-amber-800 hover:bg-amber-900/50';
+        }
+      });
+    }
+
+    function showToast(msg, icon = '💡') {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = msg;
+      toastIcon.textContent = icon;
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 2300);
+    }
+
+    function setupKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+        if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          stepDown();
+        } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+          e.preventDefault();
+          stepUp();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          changePage(1);
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          changePage(-1);
+        } else if (e.key === 's' || e.key === 'S') {
+          shuffleCurrentPage();
+        } else if (e.key === 'l' || e.key === 'L') {
+          toggleDeskLamp();
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      State.init();
+      applyLampMode();
+      renderSpiralBindings();
+      renderNotebookPage();
+      setupSmartDock();
+      setupTouchAndGestureHandlers();
+      setupReminderEngine();
+      setupMenuAndTabs();
+      setupKeyboardShortcuts();
+
+      window.addEventListener('resize', () => {
+        updateBlinderPosition(false);
+      });
+    });
+  </script>
+</body>
+</html>
